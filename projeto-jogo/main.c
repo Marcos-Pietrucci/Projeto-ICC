@@ -7,9 +7,13 @@ struct usuario{
     int idPersonagem;
     int estagio;
 };
-
+int funcao_testa_meapague()
+{
+    return 0;
+}
 struct usuario Jogador;
-
+//Minion << shift
+//Shift == Sakura
 int testa_Usuario(char nome_teste[50])
 {
         if(!(strcmp(nome_teste, Jogador.nome)))
