@@ -28,5 +28,5 @@ Esse processo não é algo essencialmente ruim. Por exemplo, se eu tenho uma bra
 Mesmo sendo algo neutro, tomem cuidado ao relizar esses dois processos acima. Apesar de que sempre podemos voltar à versões anteriores, todo cuidado é pouco
  
 <br>VALEU GALERINHA
-  
-Por que eu sou a Sakura?
+
+<strike>Shift: "Por que eu sou a Sakura?"</strike>
