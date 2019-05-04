@@ -1,6 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include<stdio.h>
 #include<string.h>
+#include<SDL/SDL.h> //PARA LINUX
+//#include<SDL.h> //PARA WINDOWS --------------- ALTERE DE ACORDO COM SEU SISTEMA
 struct usuario{
 
     char nome[50];
@@ -10,29 +11,14 @@ struct usuario{
 };
 
 struct usuario Jogador;
-
-int testa_Usuario(char nome_teste[50])
+int main(int argc, char* args[])
 {
-        if(!(strcmp(nome_teste, Jogador.nome)))
-            return 1;
-        else
-            return 0;
-}
+    printf("\nHelooooSDL!!\n");
+    /*printf("Digite seu nome: ");
+    scanf("%50[^\n]s", nome_inicial);*/
+    SDL_Delay(5000);
+    SDL_Init(SDL_INIT_EVERYTHING);
 
-int main()
-{
-    char nome_inicial[50];
-    printf("Digite seu nome: ");
-    scanf("%50[^\n]s", nome_inicial);
-
-    if(testa_Usuario(nome_inicial))
-    {
-        //Ja existe arquivo salvo com este nome
-        //carrega_Dados(); //Carrega os dados do arquivo para o objeto Jogador
-    }
-    else //Não existe esse jogador, criar novo
-    {
-     //   cria_Jogador();
-    }
+    SDL_Quit();
     return 0;
 }
