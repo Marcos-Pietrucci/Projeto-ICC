@@ -1,6 +1,0 @@
-# depslib dependency file v1.0
-1557006222 source:c:\users\brcol\desktop\projeto icc sdl\jogosdl\janela_do_jogo.cpp
-	<stdio.h>
-	<SDL.h>
-	"SDL_opengl.h"
-
