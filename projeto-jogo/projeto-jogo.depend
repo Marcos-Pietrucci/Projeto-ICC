@@ -1,5 +1,5 @@
 # depslib dependency file v1.0
-1557078593 source:/home/marcos/Documentos/USP/Engenharia da Computação/ICC I/Projeto-ICC/projeto-jogo/main.cpp
+1557160875 source:/home/marcos/Documentos/USP/Engenharia da Computação/ICC I/Projeto-ICC/projeto-jogo/main.cpp
 	<stdio.h>
 	"SDL/SDL_opengl.h"
 	<string.h>
