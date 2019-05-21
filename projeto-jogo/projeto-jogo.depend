@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1558401630 source:c:\users\marco\documents\marcos\usp\engenharia da computação\icc  i\projeto(esse)\projeto-icc\projeto-jogo\main.cpp
+	<stdio.h>
+	<string.h>
+	<SDL.h>
+
