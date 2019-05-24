@@ -174,6 +174,22 @@ void configurar()
     glDisable(GL_DEPTH_TEST);
 
 }
+
+bool colisao(float X1, float Y1, float comp1, float alt1, float X2, float Y2, float comp2, float alt2)
+{
+    //Detectar colisão em todos os lados
+    if(Y1 + alt1 < Y2) //Se colide com a parte de cima
+        return false;
+    else if(Y1 > Y2 + alt2) //Se colide com a parte de baixo
+        return false;
+    else if(X1 + comp1 < X2) //Se colide com a frente
+        return false;
+    else if(X1 > X2 + comp2) //Se colide com a parte de traz
+        return false;
+
+    return true;
+}
+
 time_t Tick[2];
 void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1Y, float *J2X, float *J2Y,
                 float **tiros1, float **tiros2, float J1Comp, float J1Alt, float J2Comp, float J2Alt) //Processa todos os movimentos necessários, e retorna os valores das coordernadas
@@ -245,10 +261,10 @@ int main(int argc, char* args[])
     float **tiros2; //A primeira coluna é a posição X, a segunda Y, a terceira indica se aquele tiro ainda existe
     int i;
 
-    tiros1 = (float **) calloc(100, sizeof(float *));
-    tiros2 = (float **) calloc(100, sizeof(float *));
+    tiros1 = (float **) calloc(20, sizeof(float *)); //!Acho dificil ter mais de 20 tiros ativos, mas se tiver dando pau pode ser nisso
+    tiros2 = (float **) calloc(20, sizeof(float *));
 
-    for(i = 0; i < 100; i++)
+    for(i = 0; i < 20; i++)
     {
         tiros1[i] = (float *) calloc(3, sizeof(float));
         tiros2[i] = (float *) calloc(3, sizeof(float));
@@ -273,7 +289,7 @@ int main(int argc, char* args[])
     float J1Alt = 30.0;
 
     float TiroComp  = 30;
-    float TiroLarg = 20;
+    float TiroAlt = 20;
 
 
     float J2X = 750.0;
@@ -407,7 +423,7 @@ int main(int argc, char* args[])
             glVertex2f(J2X + J2Comp, J2Y + J2Alt);
             glVertex2f(J2X, J2Y + J2Alt);
 
-        for(i = 0; i < 100; i++) //Busca nas duas matrizes de tiro por projeteis que tenham sido atirados
+        for(i = 0; i < 20; i++) //Busca nas duas matrizes de tiro por projeteis que tenham sido atirados
         { //!JOGADOR 1 à esquerda
         //!Jogador 2 à direita
         //!DENHA E FAZ MOVIMENTAR OS PROJETEIS
@@ -420,16 +436,16 @@ int main(int argc, char* args[])
                 //Desenha - atualiza a posição dos tiros
 
                 //Ve se teve colisão
-                if(tiros1[i][0] >= J2X- J2Comp + 15 && tiros1[i][1] >= J2Y - 20 && tiros1[i][1] <= J2Y + J2Alt)// Some com o tiro, computa o dano
+                if(colisao(J2X, J2Y, J2Comp, J2Alt, tiros1[i][0], tiros1[i][1], TiroComp, TiroAlt)) //Colisão com a parte da frente
                     tiros1[i][2] = 0.0;   //Esses números somando são para calibrar a hitbox
-                else{
-                glColor4ub(123,222,87, 255);
-                glVertex2f(tiros1[i][0], tiros1[i][1]); //primeiro ponto
-                glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1]); //segundo ponto
-                glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1] + TiroLarg);
-                glVertex2f(tiros1[i][0], tiros1[i][1] + TiroLarg);
-
-                tiros1[i][0] += 0.05; //Atualiza a posição do tiro
+                else
+                {
+                    glColor4ub(123,222,87, 255);
+                    glVertex2f(tiros1[i][0], tiros1[i][1]); //primeiro ponto
+                    glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1]); //segundo ponto
+                    glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1] + TiroAlt);
+                    glVertex2f(tiros1[i][0], tiros1[i][1] + TiroAlt);
+                    tiros1[i][0] += 0.05; //Atualiza a posição do tiro
                 }
             }
             if(tiros2[i][2] != 0.0)
@@ -438,16 +454,16 @@ int main(int argc, char* args[])
                     tiros2[i][2] = 0.0;
                 //Detectar colisão com os personagens, projetil por projetil!!!!
 
-                //Ve se teve colisão
-                if(tiros2[i][0] <= J1X + J1Comp + 10 && tiros2[i][1] >= J1Y - 20 && tiros2[i][1] <= J1Y + J1Alt)// Some com o tiro, computa o dano
+                //Ve se teve colisão // Some com o tiro, computa o dano
+                if(colisao(J1X, J1Y, J1Comp, J1Alt, tiros2[i][0], tiros2[i][1], J2Comp, J2Alt)) //Colisão com a parte da frente
                     tiros2[i][2] = 0.0;
                 else
                 {
                     glColor4ub(0,0,0, 255);
                     glVertex2f(tiros2[i][0], tiros2[i][1]); //primeiro ponto
                     glVertex2f(tiros2[i][0] + TiroComp, tiros2[i][1]); //segundo ponto
-                    glVertex2f(tiros2[i][0] + TiroComp, tiros2[i][1] + TiroLarg);
-                    glVertex2f(tiros2[i][0], tiros2[i][1] + TiroLarg);
+                    glVertex2f(tiros2[i][0] + TiroComp, tiros2[i][1] + TiroAlt);
+                    glVertex2f(tiros2[i][0], tiros2[i][1] + TiroAlt);
                     tiros2[i][0] -= 0.05;
                 }
 
@@ -468,7 +484,7 @@ int main(int argc, char* args[])
     //para detectar uma tecla "if(eventos.key.keysym.sym == SDLK_ESCAPE)"
 
 
-    for(i = 0; i < 100; i++)
+    for(i = 0; i < 20; i++)
     {
         free(tiros1[i]);
         free(tiros2[i]);
