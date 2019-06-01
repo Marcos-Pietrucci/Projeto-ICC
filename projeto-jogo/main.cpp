@@ -21,6 +21,7 @@ struct movimento{
     bool up = false;
     bool down = false;
     bool shot = false;
+    int vidas = 3;
 };
 
 FILE *arq;
@@ -191,8 +192,10 @@ bool colisao(float X1, float Y1, float comp1, float alt1, float X2, float Y2, fl
 }
 
 time_t Tick[2];
+time_t t_coracao = time(NULL);
 void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1Y, float *J2X, float *J2Y,
-                float **tiros1, float **tiros2, float J1Comp, float J1Alt, float J2Comp, float J2Alt) //Processa todos os movimentos necessários, e retorna os valores das coordernadas
+                float **tiros1, float **tiros2, float J1Comp, float J1Alt, float J2Comp, float J2Alt, bool *coracao1, bool *coracao2,
+                float *c1X, float *c1Y, float *c2X, float *c2Y) //Processa todos os movimentos necessários, e retorna os valores das coordernadas
 {
     //!LIMITAR OS PERSONAGENS NA TELA
     //!LIMITAR PROJETEIS NA TELA
@@ -250,9 +253,20 @@ void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1
                 i = 100;
             }
         }
-
     }
+    //Verificar se devo gerar corações
+    time_t tempo = time(NULL);
+    if((double) (tempo - t_coracao) >= 25) //Deve enviar o comando para gerar um coração em posição aleatoria a cada 3s
+    {
+        t_coracao = tempo;
+        *coracao1 = true;
+        *coracao2 = true;
 
+        *c1X = rand()%400 - 20; //!Adicionar aqui os tamanhos corretos dos corações!
+        *c1Y = rand()%600 - 20;
+        *c2X = 400 + rand()%400 - 20;
+        *c2Y = rand()%600 -20;
+    }
 }
 
 int main(int argc, char* args[])
@@ -278,6 +292,8 @@ int main(int argc, char* args[])
 
     //!------------ LOGICA AQUI EM BAIXO ---------------------
     bool executando = true;
+    bool coracao1 = false; //Variavel que indica se um coração deve ser gerado em local aleatório
+    bool coracao2 = false;
 
     //Varial que detecta clickes de teclas
     SDL_Event eventos;
@@ -292,10 +308,15 @@ int main(int argc, char* args[])
     float TiroAlt = 20;
 
 
-    float J2X = 750.0;
+    float J2X = 700.0;
     float J2Y = 300.0;
     float J2Comp = J1Comp;
     float J2Alt = J1Alt;
+
+    float c1X = 900; //Variáveis que armazenas as coordenadas X e Y dos possiveis corações gerados;
+    float c1Y = 500; //Começam com esses valores para que eles começem fora da tela
+    float c2X = 900;
+    float c2Y = 500;
 
     //Variáveis para movimentar o personagem
     struct movimento J1;
@@ -316,31 +337,31 @@ int main(int argc, char* args[])
 
             if(eventos.type == SDL_KEYDOWN) //Se uma tecla foi pressionada!!
             { //enquanto a tecla esta pressionada, movimentar
-                if(eventos.key.keysym.sym == SDLK_LEFT) //Apertou seta esquerda
+                if(eventos.key.keysym.sym == SDLK_a) //Apertou seta esquerda
                     J1.esq = true;
 
-                if(eventos.key.keysym.sym == SDLK_RIGHT) //Apertou seta direita
+                if(eventos.key.keysym.sym == SDLK_d) //Apertou seta direita
                     J1.dir = true;
 
-                if(eventos.key.keysym.sym == SDLK_a)
+                if(eventos.key.keysym.sym == SDLK_LEFT)
                     J2.esq = true;
 
-                if(eventos.key.keysym.sym == SDLK_d)
+                if(eventos.key.keysym.sym == SDLK_RIGHT)
                     J2.dir = true;
 
-                if(eventos.key.keysym.sym == SDLK_UP)
+                if(eventos.key.keysym.sym == SDLK_w)
                     J1.up = true;
 
-                if(eventos.key.keysym.sym == SDLK_DOWN)
+                if(eventos.key.keysym.sym == SDLK_s)
                     J1.down = true;
 
-                if(eventos.key.keysym.sym == SDLK_w)
+                if(eventos.key.keysym.sym == SDLK_UP)
                     J2.up = true;
 
-                if(eventos.key.keysym.sym == SDLK_s)
+                if(eventos.key.keysym.sym == SDLK_DOWN)
                     J2.down = true;
 
-                if(eventos.key.keysym.sym == SDLK_SLASH)
+                if(eventos.key.keysym.sym == SDLK_SPACE)
                 {
                     time_t tempo = time(NULL);
                     if((double) (tempo - Tick[0]) >= 1.5) //A diferença entre o tiro anterior e esse tem que ser maior que 1s
@@ -349,7 +370,7 @@ int main(int argc, char* args[])
                         J1.shot = true;
                     }
                 }
-                if(eventos.key.keysym.sym == SDLK_SPACE)
+                if(eventos.key.keysym.sym == SDLK_SLASH)
                 {
 
                     time_t tempo = time(NULL);
@@ -363,28 +384,28 @@ int main(int argc, char* args[])
 
             else if(eventos.type == SDL_KEYUP)
             { //se a tecla foi solta, para de se mover
-                if(eventos.key.keysym.sym == SDLK_LEFT) //Apertou seta esquerda
+                if(eventos.key.keysym.sym == SDLK_a) //Apertou seta esquerda
                     J1.esq = false;
 
-                if(eventos.key.keysym.sym == SDLK_RIGHT) //Apertou seta direita
+                if(eventos.key.keysym.sym == SDLK_d) //Apertou seta direita
                     J1.dir = false;
 
-                if(eventos.key.keysym.sym == SDLK_a)
+                if(eventos.key.keysym.sym == SDLK_LEFT)
                     J2.esq = false;
 
-                if(eventos.key.keysym.sym == SDLK_d)
+                if(eventos.key.keysym.sym == SDLK_RIGHT)
                     J2.dir = false;
 
-                if(eventos.key.keysym.sym == SDLK_UP)
+                if(eventos.key.keysym.sym == SDLK_w)
                     J1.up = false;
 
-                if(eventos.key.keysym.sym == SDLK_DOWN)
+                if(eventos.key.keysym.sym == SDLK_s)
                     J1.down = false;
 
-                if(eventos.key.keysym.sym == SDLK_w)
+                if(eventos.key.keysym.sym == SDLK_UP)
                     J2.up = false;
 
-                if(eventos.key.keysym.sym == SDLK_s)
+                if(eventos.key.keysym.sym == SDLK_DOWN)
                     J2.down = false;
 
             }
@@ -392,7 +413,8 @@ int main(int argc, char* args[])
 
 
         //!LOGICA DO PROGRAMA -- movimento do personagem
-        movimento(&J1, &J2, &J1X, &J1Y, &J2X, &J2Y, tiros1, tiros2, J1Comp, J1Alt, J2Comp, J2Alt); //Processa todo o movimento necessário
+        movimento(&J1, &J2, &J1X, &J1Y, &J2X, &J2Y, tiros1, tiros2, J1Comp, J1Alt, J2Comp, J2Alt, &coracao1, &coracao2, &c1X, &c1Y, &c2X, &c2Y); //Processa todo o movimento necessário
+
 
         //!!RENDERIZAÇÃO!!
         glClear(GL_COLOR_BUFFER_BIT); //limpa o buffer
@@ -409,24 +431,40 @@ int main(int argc, char* args[])
         //inicia desenho
         glBegin(GL_QUADS); //GL_POINTS, GL_LINES, GL_LINES_LOOP, GL_TRIANGLE, GL_POLIGON
 
-            glColor4ub(255,0,0, 255);
-            //Desenhando jogador1
-            glVertex2f(J1X, J1Y); //primeiro ponto
-            glVertex2f(J1X + J1Comp, J1Y); //segundo ponto
-            glVertex2f(J1X + J1Comp, J1Y + J1Alt);
-            glVertex2f(J1X, J1Y + J1Alt);
+        //Desenhando jogador1
+        glColor4ub(0,255,0,255);
+        glVertex2f(J1X, J1Y); //primeiro ponto
+        glVertex2f(J1X + J1Comp, J1Y); //segundo ponto
+        glVertex2f(J1X + J1Comp, J1Y + J1Alt);
+        glVertex2f(J1X, J1Y + J1Alt);
 
-            //Desenhando Jogador2
-            glColor4ub(0,0,255,255);
-            glVertex2f(J2X, J2Y); //primeiro ponto
-            glVertex2f(J2X + J2Comp, J2Y); //segundo ponto
-            glVertex2f(J2X + J2Comp, J2Y + J2Alt);
-            glVertex2f(J2X, J2Y + J2Alt);
+        //Desenhando Jogador2
+        glColor4ub(0,0,255,255);
+        glVertex2f(J2X, J2Y); //primeiro ponto
+        glVertex2f(J2X + J2Comp, J2Y); //segundo ponto
+        glVertex2f(J2X + J2Comp, J2Y + J2Alt);
+        glVertex2f(J2X, J2Y + J2Alt);
+
+        //Desenhando os corações
+        if(coracao2)
+        {
+            glColor4ub(255,0,0,255);
+            glVertex2f(c2X, c2Y); //primeiro ponto
+            glVertex2f(c2X + 20, c2Y); //segundo ponto
+            glVertex2f(c2X + 20, c2Y + 20);
+            glVertex2f(c2X, c2Y + 20);
+        }
+        if(coracao1)
+        {
+            glColor4ub(255,0,0,255);
+            glVertex2f(c1X, c1Y); //primeiro ponto
+            glVertex2f(c1X + 20, c1Y); //segundo ponto
+            glVertex2f(c1X + 20, c1Y + 20);
+            glVertex2f(c1X, c1Y + 20);
+        }
 
         for(i = 0; i < 20; i++) //Busca nas duas matrizes de tiro por projeteis que tenham sido atirados
-        { //!JOGADOR 1 à esquerda
-        //!Jogador 2 à direita
-        //!DENHA E FAZ MOVIMENTAR OS PROJETEIS
+        { //Aqui os projetos serão desenhados, e as colisões serão detectadas
 
             //Atualiza as posições dos tiros
             if(tiros1[i][2] != 0.0) // Coordenadas do tiro são (tiro1[i][0] ; tiros1[i][1])
@@ -436,10 +474,22 @@ int main(int argc, char* args[])
                 //Desenha - atualiza a posição dos tiros
 
                 //Ve se teve colisão
-                if(colisao(J2X, J2Y, J2Comp, J2Alt, tiros1[i][0], tiros1[i][1], TiroComp, TiroAlt)) //Colisão com a parte da frente
-                    tiros1[i][2] = 0.0;   //Esses números somando são para calibrar a hitbox
-                else
+                if(colisao(J2X, J2Y, J2Comp, J2Alt, tiros1[i][0], tiros1[i][1], TiroComp, TiroAlt)) //Ocorreu colisão
                 {
+                    //Colisão com o Jogador2
+                    tiros1[i][2] = 0.0;
+                    J2.vidas--; //Tira uma das vidas do jogador2
+                    if(!J2.vidas) //Se não tem mais vidas, ou seja morreu
+                    {
+                        //Acaba o jogo
+                        Jogador1.vitorias++;
+                        Jogador2.derrotas++;
+                        //Salva os dados devidamente
+                        executando = false;
+                    }
+                }
+                else
+                {   //Caso não tenha ocorrido colisão, o tiro deve continuar seu trajeto
                     glColor4ub(123,222,87, 255);
                     glVertex2f(tiros1[i][0], tiros1[i][1]); //primeiro ponto
                     glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1]); //segundo ponto
@@ -455,8 +505,20 @@ int main(int argc, char* args[])
                 //Detectar colisão com os personagens, projetil por projetil!!!!
 
                 //Ve se teve colisão // Some com o tiro, computa o dano
-                if(colisao(J1X, J1Y, J1Comp, J1Alt, tiros2[i][0], tiros2[i][1], J2Comp, J2Alt)) //Colisão com a parte da frente
+                if(colisao(J1X, J1Y, J1Comp, J1Alt, tiros2[i][0], tiros2[i][1], J2Comp, J2Alt))
+                {
                     tiros2[i][2] = 0.0;
+                    //Colidiu com o jogador1;
+                    J1.vidas--;
+                    if(!J1.vidas)
+                    {
+                        //O jogador1 morreu, o jogo acaba
+                        Jogador1.derrotas--;
+                        Jogador2.vitorias++;
+                        //Salva os dados devidamente
+                        executando = false;
+                    }
+                }
                 else
                 {
                     glColor4ub(0,0,0, 255);
@@ -469,7 +531,19 @@ int main(int argc, char* args[])
 
             }
         }
+        //Detecta se  houve colisão com o coração, ou seja, se os jogadores pegaram seus corações extras;
 
+        if(colisao(J1X, J1Y, J1Comp, J1Alt, c1X, c1Y, 20, 20 && coracao1)) //NOVAMENTE, AQUI ARRUMAR OS COMPRIMENTOS E ALTURAS DOS CORAÇÕES
+        { //O fato de o coração não estar desenhado não impede a função colisao de retornar true
+            J1.vidas++;
+            coracao1 = false;
+        }
+        if(colisao(J2X, J2Y, J2Comp, J2Alt, c2X, c2Y, 20, 20) && coracao2) //NOVAMENTE, AQUI ARRUMAR OS COMPRIMENTOS E ALTURAS DOS CORAÇÕES
+        { //Aqui, se eu não testar se coracao2 é falso, mesmo que o coração suma, quando o jogador "Colide" com as coordenadas dele, ele vai ganhar uma vida
+
+            J2.vidas++;
+            coracao2 = false;
+        }
 
 
         glEnd();
