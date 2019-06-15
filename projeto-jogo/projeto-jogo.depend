@@ -4,10 +4,12 @@
 	<string.h>
 	<SDL.h>
 
-1559149146 source:c:\users\marco\documents\marcos\usp\engenharia da computação\icc  i\projeto\projeto-icc\projeto-jogo\main.cpp
+1559599201 source:c:\users\marco\documents\marcos\usp\engenharia da computação\icc  i\projeto\projeto-icc\projeto-jogo\main.cpp
 	<stdio.h>
 	<string.h>
 	<SDL.h>
 	"SDL_opengl.h"
 	<time.h>
+	<SDL_image.h>
+	"string"
 

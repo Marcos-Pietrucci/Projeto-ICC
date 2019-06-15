@@ -33,7 +33,7 @@
 			<Add option="-fexceptions" />
 		</Compiler>
 		<Linker>
-			<Add option="-lmingw32 -lSDLmain -lSDL -lopengl32 -lglu32" />
+			<Add option="-lmingw32 -lSDLmain -lSDL -lopengl32 -lglu32 -lSDL_image" />
 		</Linker>
 		<Unit filename="main.cpp" />
 		<Extensions>
