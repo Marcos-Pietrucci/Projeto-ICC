@@ -5,9 +5,9 @@
 #include<time.h>
 #include<SDL_image.h>
 #include"string"
-// PARA ARQUIVOS BINARIOS:
+#include<SDL_mixer.h>
 
-#define NO_STDIO_REDIRECT
+
 struct usuario{
 
     char nome[50];
@@ -16,7 +16,8 @@ struct usuario{
     int derrotas;
 };
 
-struct movimento{
+struct movimento
+{
 
     bool esq = false;
     bool dir = false;
@@ -163,9 +164,13 @@ void salva_dados_DEV(struct usuario *alvo,char nome[50], int b,int d, int e) //f
     alvo->vitorias = d;
     alvo->derrotas = e;
 }
+SDL_Surface *icone;
 void configurar()
 {
     SDL_Init(SDL_INIT_EVERYTHING);
+
+    icone = IMG_Load("icone.png");
+    SDL_WM_SetIcon(icone, NULL);
 
     //memoria
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -202,6 +207,12 @@ void configurar()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    int frequencia = 22050;
+    Uint16 formato = AUDIO_S16SYS;
+    int canais = 2;
+    int buffer = 4096;
+
+    Mix_OpenAudio(frequencia, formato, canais, buffer);
 }
 
 bool colisao(float X1, float Y1, float comp1, float alt1, float X2, float Y2, float comp2, float alt2)
@@ -268,28 +279,28 @@ void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1
     int i;
 
     if(J1->esq && *J1X > 0) //O ponto inicial dele
-        *J1X -= 0.1;
+        *J1X -= 0.2;
 
     if(J1->dir && *J1X + J1Comp < 400) //Trava o movimento do personagem no quadrado estabelecido
-        *J1X += 0.1;
+        *J1X += 0.2;
 
     if(J2->esq && *J2X > 400) //se a tecla A for pressionada
-        *J2X -= 0.1;
+        *J2X -= 0.2;
 
     if(J2->dir && *J2X + J2Comp < 800) //se a tecla D for pressionada
-        *J2X += 0.1;
+        *J2X += 0.2;
 
     if(J1->up && *J1Y > 0)
-        *J1Y -= 0.1;
+        *J1Y -= 0.2;
 
     if(J1->down && *J1Y + J1Alt < 550)
-        *J1Y += 0.1;
+        *J1Y += 0.2;
 
     if(J2->up && *J2Y > 0)
-        *J2Y -= 0.1;
+        *J2Y -= 0.2;
 
     if(J2->down && *J2Y + J2Alt < 550)
-        *J2Y += 0.1;
+        *J2Y += 0.2;
 
     if(J1->shot)
     {
@@ -298,8 +309,8 @@ void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1
         {
             if(!tiros1[i][2]) //Se a terceira coluna de uma das linhas de tiro estiver "Vaga" (for igual a zero)
             {
-                tiros1[i][0] =  *J1X; //O tiro começa na mesma posição do personagem
-                tiros1[i][1] =  *J1Y;
+                tiros1[i][0] =  *J1X + J1Comp; //O tiro começa na mesma posição do personagem
+                tiros1[i][1] =  *J1Y + (J1Alt)/2 -35;
                 tiros1[i][2] = 1.0; //indica que ha esse tiro
                 i = 100;
             }
@@ -313,8 +324,8 @@ void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1
         {
             if(!tiros2[i][2])
             {
-                tiros2[i][0] = *J2X;
-                tiros2[i][1] = *J2Y;
+                tiros2[i][0] = *J2X - J2Comp;
+                tiros2[i][1] = *J2Y + (J2Alt)/2 -35;
                 tiros2[i][2] = 1.0; //indica que há esse tiro
                 i = 100;
             }
@@ -322,7 +333,7 @@ void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1
     }
     //Verificar se devo gerar corações
     time_t tempo = time(NULL);
-    if((double) (tempo - t_coracao) >= 25) //Deve enviar o comando para gerar um coração em posição aleatoria a cada 3s
+    if((double) (tempo - t_coracao) >= 10) //Deve enviar o comando para gerar um coração em posição aleatoria a cada 12.5s
     {
         t_coracao = tempo;
         *coracao1 = true;
@@ -337,9 +348,10 @@ void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1
 
 int main(int argc, char* args[])
 {
+
     float **tiros1; //A primeira coluna é a posição X, a segunda Y, a terceira indica se aquele tiro ainda existe
     float **tiros2; //A primeira coluna é a posição X, a segunda Y, a terceira indica se aquele tiro ainda existe
-    int i;
+    int i, vencedor, musica_toca;
 
     tiros1 = (float **) calloc(20, sizeof(float *)); //!Acho dificil ter mais de 20 tiros ativos, mas se tiver dando pau pode ser nisso
     tiros2 = (float **) calloc(20, sizeof(float *));
@@ -353,8 +365,16 @@ int main(int argc, char* args[])
     Tick[0] = Tick[1] = time(NULL);
 
     arquivo = false;
-    /*scanf("%50[^\n]s", nome_inicial);*/
     configurar();
+
+    Mix_Chunk *som;
+    Mix_Chunk *dano;
+    Mix_Music *musica1;
+    Mix_Music *musica2;
+    som = Mix_LoadWAV("sons//alarme.wav");
+    dano = Mix_LoadWAV("sons//dano.wav");
+    musica1 = Mix_LoadMUS("sons//batalha.mp3");
+    musica2 = Mix_LoadMUS("sons//naruto.mp3");
 
     //!------------ LOGICA AQUI EM BAIXO ---------------------
     bool executando = true;
@@ -368,8 +388,8 @@ int main(int argc, char* args[])
     //Iniciando variaveis para elementos e personagens
     float J1X = 50.0;
     float J1Y = 300.0;
-    float J1Comp = 60.0;
-    float J1Alt = 80.0;
+    float J1Comp = 90.0;
+    float J1Alt = 110.0;
 
     float TiroComp  = 70.0;
     float TiroAlt = 20.0;
@@ -398,12 +418,14 @@ int main(int argc, char* args[])
     unsigned int fundo = 0;
     unsigned int kunai1 = 0,kunai2 = 0;
     unsigned int coracao = 0;
+    unsigned int vitoria = 0;
 
     //detecta_imagem(); ///Função deve detectar a imagem corretamente, dado os ids dos personagens
     player1 = loadTexture("imagens//sasuke.png");
     player2 = loadTexture("imagens//naruto.png");
     menu = loadTexture("imagens//menu.png");
     fundo = loadTexture("imagens//fundo2.png");
+    vitoria = loadTexture("imagens//vitoria.png");
     kunai1 = loadTexture("imagens//kunai1.png");
     kunai2 = loadTexture("imagens//kunai2.png");
     coracao = loadTexture("imagens//coracao.png");
@@ -416,7 +438,7 @@ int main(int argc, char* args[])
         while(SDL_PollEvent(&eventos))
         {
             //Fecha com o X da janela
-            if(eventos.type == SDL_QUIT || acabou_jogo)
+            if(eventos.type == SDL_QUIT)
                 executando = false;
 
             //Detectar movimento
@@ -458,7 +480,6 @@ int main(int argc, char* args[])
                 }
                 if(eventos.key.keysym.sym == SDLK_SLASH)
                 {
-
                     time_t tempo = time(NULL);
                     if((double) (tempo - Tick[1]) >= 1.5) //A diferença entre o tiro anterior e esse tem que ser maior que 1s
                     {
@@ -469,6 +490,8 @@ int main(int argc, char* args[])
                 if(eventos.key.keysym.sym == SDLK_1)
                 {
                     comecou_jogo = true;
+                    Mix_PlayMusic(musica1, -1);
+                    //Mix_HaltMusic(); para parar
                 }
 
             }
@@ -513,211 +536,272 @@ int main(int argc, char* args[])
         //Configura a matriz
         glOrtho(0, 800, 600, 0, -1, 1);
 
-        if(comecou_jogo)
+        if(!comecou_jogo)
+        {
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, menu); //!SETA A IMAGEM
+
+                //inicia desenho
+                glBegin(GL_QUADS);
+
+                glColor4ub(255,255,255,255);
+                glTexCoord2d(0,0);   glVertex2f(0, 0);//primeiro ponto
+                glTexCoord2d(1,0);   glVertex2f(800, 0); // segundo ponto
+                glTexCoord2d(1,1);   glVertex2f(800, 600);
+                glTexCoord2d(0,1);   glVertex2f(0, 600);
+
+                glEnd();
+                glDisable(GL_TEXTURE_2D);
+        }
+        else //comecou_jogo
         {
             //-----------Setando o fundo
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, fundo); //!SETA A IMAGEM
-
-            //inicia desenho
-            glBegin(GL_QUADS);
-
-            glColor4ub(255,255,255,255);
-            glTexCoord2d(0,0);   glVertex2f(0, 0);//primeiro ponto
-            glTexCoord2d(1,0);   glVertex2f(800, 0); // segundo ponto
-            glTexCoord2d(1,1);   glVertex2f(800, 600);
-            glTexCoord2d(0,1);   glVertex2f(0, 600);
-
-            glEnd();
-            glDisable(GL_TEXTURE_2D);
-
-            //!LOGICA DO PROGRAMA -- movimento do personagem
-            movimento(&J1, &J2, &J1X, &J1Y, &J2X, &J2Y, tiros1, tiros2, J1Comp, J1Alt, J2Comp, J2Alt, &coracao1, &coracao2, &c1X, &c1Y, &c2X, &c2Y, cLado); //Processa todo o movimento necessário
-
-            //-------------Setando outra imagem ---------//
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, player1); //!SETA A IMAGEM
-
-            //inicia desenho
-            glBegin(GL_QUADS); //GL_POINTS, GL_LINES, GL_LINES_LOOP, GL_TRIANGLE, GL_POLIGON
-
-            //Desenhando jogador1
-            glColor4ub(255,255,255,255);
-            glTexCoord2d(0,0); glVertex2f(J1X, J1Y); //primeiro ponto
-            glTexCoord2d(1,0); glVertex2f(J1X + J1Comp, J1Y); //segundo ponto
-            glTexCoord2d(1,1); glVertex2f(J1X + J1Comp, J1Y + J1Alt);
-            glTexCoord2d(0,1); glVertex2f(J1X, J1Y + J1Alt);
-
-            glEnd();
-            glDisable(GL_TEXTURE_2D);
-
-            //------------SETA OUTRA IMAGEM -----------------//
-
-
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, player2); //!SETA A IMAGEM
-
-            //inicia desenho
-            glBegin(GL_QUADS);
-
-            //Desenhando Jogador2
-            glColor4ub(255,255,255,255);
-            glTexCoord2d(0,0); glVertex2f(J2X, J2Y); //primeiro ponto
-            glTexCoord2d(1,0); glVertex2f(J2X + J2Comp, J2Y); //segundo ponto
-            glTexCoord2d(1,1); glVertex2f(J2X + J2Comp, J2Y + J2Alt);
-            glTexCoord2d(0,1); glVertex2f(J2X, J2Y + J2Alt);
-            glEnd();
-            glDisable(GL_TEXTURE_2D);
-
-            //Desenhando os corações
-            if(coracao2 && J2.vidas < 5)
+            if(!acabou_jogo)
             {
+
+
                 glEnable(GL_TEXTURE_2D);
-                glBindTexture(GL_TEXTURE_2D, coracao); //!SETA A IMAGEM
+                glBindTexture(GL_TEXTURE_2D, fundo); //!SETA A IMAGEM
+
                 //inicia desenho
                 glBegin(GL_QUADS);
 
                 glColor4ub(255,255,255,255);
-                glTexCoord2d(0,0);/* -->*/glVertex2f(c2X, c2Y); //primeiro ponto
-                glTexCoord2d(1,0);        glVertex2f(c2X + cLado, c2Y); //segundo ponto
-                glTexCoord2d(1,1);        glVertex2f(c2X + cLado, c2Y + cLado);
-                glTexCoord2d(0,1);        glVertex2f(c2X, c2Y + cLado);
+                glTexCoord2d(0,0);   glVertex2f(0, 0);//primeiro ponto
+                glTexCoord2d(1,0);   glVertex2f(800, 0); // segundo ponto
+                glTexCoord2d(1,1);   glVertex2f(800, 600);
+                glTexCoord2d(0,1);   glVertex2f(0, 600);
 
                 glEnd();
                 glDisable(GL_TEXTURE_2D);
-            }
-            if(coracao1 && J1.vidas < 5)
-            {
+
+                //!LOGICA DO PROGRAMA -- movimento do personagem
+                movimento(&J1, &J2, &J1X, &J1Y, &J2X, &J2Y, tiros1, tiros2, J1Comp, J1Alt, J2Comp, J2Alt, &coracao1, &coracao2, &c1X, &c1Y, &c2X, &c2Y, cLado); //Processa todo o movimento necessário
+
+                //-------------Setando outra imagem ---------//
                 glEnable(GL_TEXTURE_2D);
-                glBindTexture(GL_TEXTURE_2D, coracao); //!SETA A IMAGEM
+                glBindTexture(GL_TEXTURE_2D, player1); //!SETA A IMAGEM
+
+                //inicia desenho
+                glBegin(GL_QUADS); //GL_POINTS, GL_LINES, GL_LINES_LOOP, GL_TRIANGLE, GL_POLIGON
+
+                //Desenhando jogador1
+                glColor4ub(255,255,255,255);
+                glTexCoord2d(0,0); glVertex2f(J1X, J1Y); //primeiro ponto
+                glTexCoord2d(1,0); glVertex2f(J1X + J1Comp, J1Y); //segundo ponto
+                glTexCoord2d(1,1); glVertex2f(J1X + J1Comp, J1Y + J1Alt);
+                glTexCoord2d(0,1); glVertex2f(J1X, J1Y + J1Alt);
+
+                glEnd();
+                glDisable(GL_TEXTURE_2D);
+
+                //------------SETA OUTRA IMAGEM -----------------//
+
+
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, player2); //!SETA A IMAGEM
+
+                //inicia desenho
+                glBegin(GL_QUADS);
+
+                //Desenhando Jogador2
+                glColor4ub(255,255,255,255);
+                glTexCoord2d(0,0); glVertex2f(J2X, J2Y); //primeiro ponto
+                glTexCoord2d(1,0); glVertex2f(J2X + J2Comp, J2Y); //segundo ponto
+                glTexCoord2d(1,1); glVertex2f(J2X + J2Comp, J2Y + J2Alt);
+                glTexCoord2d(0,1); glVertex2f(J2X, J2Y + J2Alt);
+                glEnd();
+                glDisable(GL_TEXTURE_2D);
+
+                //Desenhando os corações
+                if(coracao2 && J2.vidas < 5)
+                {
+                    glEnable(GL_TEXTURE_2D);
+                    glBindTexture(GL_TEXTURE_2D, coracao); //!SETA A IMAGEM
+                    //inicia desenho
+                    glBegin(GL_QUADS);
+
+                    glColor4ub(255,255,255,255);
+                    glTexCoord2d(0,0);/* -->*/glVertex2f(c2X, c2Y); //primeiro ponto
+                    glTexCoord2d(1,0);        glVertex2f(c2X + cLado, c2Y); //segundo ponto
+                    glTexCoord2d(1,1);        glVertex2f(c2X + cLado, c2Y + cLado);
+                    glTexCoord2d(0,1);        glVertex2f(c2X, c2Y + cLado);
+
+                    glEnd();
+                    glDisable(GL_TEXTURE_2D);
+                }
+                if(coracao1 && J1.vidas < 5)
+                {
+                    glEnable(GL_TEXTURE_2D);
+                    glBindTexture(GL_TEXTURE_2D, coracao); //!SETA A IMAGEM
+                    //inicia desenho
+                    glBegin(GL_QUADS);
+
+                    glColor4ub(255,255,255,255);
+                    glTexCoord2d(0,0);   glVertex2f(c1X, c1Y); //primeiro ponto
+                    glTexCoord2d(1,0);   glVertex2f(c1X + cLado, c1Y); //segundo ponto
+                    glTexCoord2d(1,1);   glVertex2f(c1X + cLado, c1Y + cLado);
+                    glTexCoord2d(0,1);   glVertex2f(c1X, c1Y + cLado);
+
+                    glEnd();
+                    glDisable(GL_TEXTURE_2D);
+                }
+
+                for(i = 0; i < 20; i++) //Busca nas duas matrizes de tiro por projeteis que tenham sido atirados
+                { //Aqui os projetos serão desenhados, e as colisões serão detectadas
+
+                    //Atualiza as posições dos tiros
+                    if(tiros1[i][2] != 0.0) // Coordenadas do tiro são (tiro1[i][0] ; tiros1[i][1])
+                    {
+                        glEnable(GL_TEXTURE_2D);
+                        glBindTexture(GL_TEXTURE_2D, kunai1); //!SETA A IMAGEM
+                        glBegin(GL_QUADS);
+
+                        if(tiros1[i][0] + TiroComp> 800) //Se saiu da tela
+                            tiros1[i][2] = 0.0; //Mata o bloco
+                        //Desenha - atualiza a posição dos tiros
+
+                        //Ve se teve colisão
+                        if(colisao(J2X, J2Y, J2Comp, J2Alt, tiros1[i][0], tiros1[i][1], TiroComp, TiroAlt)) //Ocorreu colisão
+                        {
+                            //Colisão com o Jogador2
+
+                            //Ativa o som do dano
+                            Mix_PlayChannel(-1,dano, 0);
+
+                            tiros1[i][2] = 0.0;
+                            J2.vidas--; //Tira uma das vidas do jogador2
+                            if(!J2.vidas) //Se não tem mais vidas, ou seja morreu
+                            {
+                                //Acaba o jogo
+                                Jogador1.vitorias++;
+                                Jogador2.derrotas++;
+                                //Salva os dados devidamente
+                                acabou_jogo = true;
+                                vencedor = 1;
+                                musica_toca = 1;
+                            }
+                        }
+                        else
+                        {   //Caso não tenha ocorrido colisão, o tiro deve continuar seu trajeto
+                            glColor4ub(255,255,255,255);
+                            glTexCoord2d(0,0); glVertex2f(tiros1[i][0], tiros1[i][1]); //primeiro ponto
+                            glTexCoord2d(1,0); glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1]); //segundo ponto
+                            glTexCoord2d(1,1); glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1] + TiroAlt);
+                            glTexCoord2d(0,1); glVertex2f(tiros1[i][0], tiros1[i][1] + TiroAlt);
+                            tiros1[i][0] += 0.4; //Atualiza a posição do tiro
+                        }
+                        glEnd();
+                        glDisable(GL_TEXTURE_2D);
+                    }
+                    if(tiros2[i][2] != 0.0)
+                    {
+                        glEnable(GL_TEXTURE_2D);
+                        glBindTexture(GL_TEXTURE_2D, kunai2); //!SETA A IMAGEM
+                        glBegin(GL_QUADS);
+
+                        if(tiros2[i][0] < 0)
+                            tiros2[i][2] = 0.0;
+                        //Detectar colisão com os personagens, projetil por projetil!!!!
+
+                        //Ve se teve colisão // Some com o tiro, computa o dano
+                        if(colisao(J1X, J1Y, J1Comp, J1Alt, tiros2[i][0], tiros2[i][1], TiroComp, TiroAlt))
+                        {
+                            tiros2[i][2] = 0.0;
+                            //Colidiu com o jogador1;
+                            Mix_PlayChannel(-1, dano, 0); //Ativa  o som
+
+                            J1.vidas--;
+                            if(!J1.vidas)
+                            {
+                                //O jogador1 morreu, o jogo acaba
+                                Jogador1.derrotas++;
+                                Jogador2.vitorias++;
+                                //Salva os dados devidamente
+                                acabou_jogo = true;
+                                vencedor = 2;
+                                musica_toca = 1;
+                            }
+                        }
+                        else
+                        {
+                            glColor4ub(255,255,255, 255);
+                            glTexCoord2d(0,0); glVertex2f(tiros2[i][0], tiros2[i][1]); //primeiro ponto
+                            glTexCoord2d(1,0); glVertex2f(tiros2[i][0] + TiroComp, tiros2[i][1]); //segundo ponto
+                            glTexCoord2d(1,1); glVertex2f(tiros2[i][0] + TiroComp, tiros2[i][1] + TiroAlt);
+                            glTexCoord2d(0,1); glVertex2f(tiros2[i][0], tiros2[i][1] + TiroAlt);
+                            tiros2[i][0] -= 0.4;
+                        }
+
+                        glEnd();
+                        glDisable(GL_TEXTURE_2D);
+                    }
+                }
+                //Detecta se  houve colisão com o coração, ou seja, se os jogadores pegaram seus corações extras;
+
+                if(colisao(J1X, J1Y, J1Comp, J1Alt, c1X, c1Y, cLado, cLado) && coracao1 && J1.vidas < 5) //NOVAMENTE, AQUI ARRUMAR OS COMPRIMENTOS E ALTURAS DOS CORAÇÕES
+                { //O fato de o coração não estar desenhado não impede a função colisao de retornar true
+                    J1.vidas++;
+                    coracao1 = false;
+                }
+                if(colisao(J2X, J2Y, J2Comp, J2Alt, c2X, c2Y, cLado, cLado) && coracao2 && J2.vidas < 5) //NOVAMENTE, AQUI ARRUMAR OS COMPRIMENTOS E ALTURAS DOS CORAÇÕES
+                { //Aqui, se eu não testar se coracao2 é falso, mesmo que o coração suma, quando o jogador "Colide" com as coordenadas dele, ele vai ganhar uma vida
+
+                    J2.vidas++;
+                    coracao2 = false;
+                }
+
+                escreve_vidas(J1.vidas, J2.vidas, cLado, coracao); //escreve na tela as vidas dos personagens
+            }
+            else //acabou o jogo, mostrar vitorioso
+            {
+                if(musica_toca == 1)
+                {
+                    Mix_HaltMusic();
+                    Mix_PlayMusic(musica2, -1);
+                    musica_toca = 0;
+                }
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, vitoria); //!SETA A IMAGEM
+
                 //inicia desenho
                 glBegin(GL_QUADS);
 
                 glColor4ub(255,255,255,255);
-                glTexCoord2d(0,0);   glVertex2f(c1X, c1Y); //primeiro ponto
-                glTexCoord2d(1,0);   glVertex2f(c1X + cLado, c1Y); //segundo ponto
-                glTexCoord2d(1,1);   glVertex2f(c1X + cLado, c1Y + cLado);
-                glTexCoord2d(0,1);   glVertex2f(c1X, c1Y + cLado);
+                glTexCoord2d(0,0);   glVertex2f(0, 0);//primeiro ponto
+                glTexCoord2d(1,0);   glVertex2f(800, 0); // segundo ponto
+                glTexCoord2d(1,1);   glVertex2f(800, 600);
+                glTexCoord2d(0,1);   glVertex2f(0, 600);
 
                 glEnd();
                 glDisable(GL_TEXTURE_2D);
+
+                //inicia desenho do personagemm
+                glEnable(GL_TEXTURE_2D);
+                if(vencedor == 1)
+                    glBindTexture(GL_TEXTURE_2D, player1); //!SETA A IMAGEM
+                else
+                    glBindTexture(GL_TEXTURE_2D, player2); //!SETA A IMAGEM
+
+
+                glBegin(GL_QUADS);
+
+                //Desenhando jogador1
+                J1Comp = 300;
+                J1Alt = 380;
+                J1X = 10;
+                J1Y = 150;
+                glColor4ub(255,255,255,255);
+                glTexCoord2d(0,0); glVertex2f(J1X, J1Y); //primeiro ponto
+                glTexCoord2d(1,0); glVertex2f(J1X + J1Comp, J1Y); //segundo ponto
+                glTexCoord2d(1,1); glVertex2f(J1X + J1Comp, J1Y + J1Alt);
+                glTexCoord2d(0,1); glVertex2f(J1X, J1Y + J1Alt);
+
+                glEnd();
+                glDisable(GL_TEXTURE_2D);
+
             }
-
-            for(i = 0; i < 20; i++) //Busca nas duas matrizes de tiro por projeteis que tenham sido atirados
-            { //Aqui os projetos serão desenhados, e as colisões serão detectadas
-
-                //Atualiza as posições dos tiros
-                if(tiros1[i][2] != 0.0) // Coordenadas do tiro são (tiro1[i][0] ; tiros1[i][1])
-                {
-                    glEnable(GL_TEXTURE_2D);
-                    glBindTexture(GL_TEXTURE_2D, kunai1); //!SETA A IMAGEM
-                    glBegin(GL_QUADS);
-
-                    if(tiros1[i][0] + TiroComp> 800) //Se saiu da tela
-                        tiros1[i][2] = 0.0; //Mata o bloco
-                    //Desenha - atualiza a posição dos tiros
-
-                    //Ve se teve colisão
-                    if(colisao(J2X, J2Y, J2Comp, J2Alt, tiros1[i][0], tiros1[i][1], TiroComp, TiroAlt)) //Ocorreu colisão
-                    {
-                        //Colisão com o Jogador2
-                        tiros1[i][2] = 0.0;
-                        J2.vidas--; //Tira uma das vidas do jogador2
-                        if(!J2.vidas) //Se não tem mais vidas, ou seja morreu
-                        {
-                            //Acaba o jogo
-                            Jogador1.vitorias++;
-                            Jogador2.derrotas++;
-                            //Salva os dados devidamente
-                            executando = false;
-                        }
-                    }
-                    else
-                    {   //Caso não tenha ocorrido colisão, o tiro deve continuar seu trajeto
-                        glColor4ub(255,255,255,255);
-                        glTexCoord2d(0,0); glVertex2f(tiros1[i][0], tiros1[i][1]); //primeiro ponto
-                        glTexCoord2d(1,0); glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1]); //segundo ponto
-                        glTexCoord2d(1,1); glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1] + TiroAlt);
-                        glTexCoord2d(0,1); glVertex2f(tiros1[i][0], tiros1[i][1] + TiroAlt);
-                        tiros1[i][0] += 0.075; //Atualiza a posição do tiro
-                    }
-                    glEnd();
-                    glDisable(GL_TEXTURE_2D);
-                }
-                if(tiros2[i][2] != 0.0)
-                {
-                    glEnable(GL_TEXTURE_2D);
-                    glBindTexture(GL_TEXTURE_2D, kunai2); //!SETA A IMAGEM
-                    glBegin(GL_QUADS);
-
-                    if(tiros2[i][0] < 0)
-                        tiros2[i][2] = 0.0;
-                    //Detectar colisão com os personagens, projetil por projetil!!!!
-
-                    //Ve se teve colisão // Some com o tiro, computa o dano
-                    if(colisao(J1X, J1Y, J1Comp, J1Alt, tiros2[i][0], tiros2[i][1], TiroComp, TiroAlt))
-                    {
-                        tiros2[i][2] = 0.0;
-                        //Colidiu com o jogador1;
-                        J1.vidas--;
-                        if(!J1.vidas)
-                        {
-                            //O jogador1 morreu, o jogo acaba
-                            Jogador1.derrotas--;
-                            Jogador2.vitorias++;
-                            //Salva os dados devidamente
-                            executando = false;
-                        }
-                    }
-                    else
-                    {
-                        glColor4ub(255,255,255, 255);
-                        glTexCoord2d(0,0); glVertex2f(tiros2[i][0], tiros2[i][1]); //primeiro ponto
-                        glTexCoord2d(1,0); glVertex2f(tiros2[i][0] + TiroComp, tiros2[i][1]); //segundo ponto
-                        glTexCoord2d(1,1); glVertex2f(tiros2[i][0] + TiroComp, tiros2[i][1] + TiroAlt);
-                        glTexCoord2d(0,1); glVertex2f(tiros2[i][0], tiros2[i][1] + TiroAlt);
-                        tiros2[i][0] -= 0.075;
-                    }
-
-                    glEnd();
-                    glDisable(GL_TEXTURE_2D);
-                }
-            }
-            //Detecta se  houve colisão com o coração, ou seja, se os jogadores pegaram seus corações extras;
-
-            if(colisao(J1X, J1Y, J1Comp, J1Alt, c1X, c1Y, cLado, cLado) && coracao1 && J1.vidas < 5) //NOVAMENTE, AQUI ARRUMAR OS COMPRIMENTOS E ALTURAS DOS CORAÇÕES
-            { //O fato de o coração não estar desenhado não impede a função colisao de retornar true
-                J1.vidas++;
-                coracao1 = false;
-            }
-            if(colisao(J2X, J2Y, J2Comp, J2Alt, c2X, c2Y, cLado, cLado) && coracao2 && J2.vidas < 5) //NOVAMENTE, AQUI ARRUMAR OS COMPRIMENTOS E ALTURAS DOS CORAÇÕES
-            { //Aqui, se eu não testar se coracao2 é falso, mesmo que o coração suma, quando o jogador "Colide" com as coordenadas dele, ele vai ganhar uma vida
-
-                J2.vidas++;
-                coracao2 = false;
-            }
-
-            escreve_vidas(J1.vidas, J2.vidas, cLado, coracao); //escreve na tela as vidas dos personagens
         }
-        else
-        {
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, menu); //!SETA A IMAGEM
-
-            //inicia desenho
-            glBegin(GL_QUADS);
-
-            glColor4ub(255,255,255,255);
-            glTexCoord2d(0,0);   glVertex2f(0, 0);//primeiro ponto
-            glTexCoord2d(1,0);   glVertex2f(800, 0); // segundo ponto
-            glTexCoord2d(1,1);   glVertex2f(800, 600);
-            glTexCoord2d(0,1);   glVertex2f(0, 600);
-
-            glEnd();
-            glDisable(GL_TEXTURE_2D);
-        }
-
-
         //Fecha matriz
         glPopMatrix();
 
@@ -734,14 +818,21 @@ int main(int argc, char* args[])
         free(tiros1[i]);
         free(tiros2[i]);
     }
+
     free(tiros1);
     free(tiros2);
-    glDisable(GL_BLEND);
+    Mix_FreeChunk(som);
+    Mix_FreeChunk(dano);
+    Mix_FreeMusic(musica1);
+    Mix_FreeMusic(musica2);
 
+    Mix_CloseAudio();
+    glDisable(GL_BLEND);
     SDL_Quit();
 
     if(arquivo)
         fclose(arq);
+
 
     return 0;
 }
