@@ -6,8 +6,14 @@
 #include<SDL_image.h>
 #include"string"
 #include<SDL_mixer.h>
+//!Essa constante define o valor da velocidade dos personagens e dos projéteis
+//!Caso necessário, altere esse valor para calibrar a velocidade
+#define VELOCIDADE 0.1 //recomendamos aumentar de 0.5 em 0.5 até encontrar o valor ideal
 
-#define VELOCIDADE 0.1
+//!Essa constante define as proporções da tela
+#define TAMANHO_TELA 1 //recomendamos aumentar para valores entre 1 e 2
+
+
 
 struct usuario{
 
@@ -196,14 +202,14 @@ void configurar()
     SDL_WM_SetCaption("Naruto Simulator!", NULL);
 
     //Tamanho da janela - (x,y, bits/pixel, tipo_janela)
-    SDL_SetVideoMode(800,600, 32,SDL_OPENGL);
+    SDL_SetVideoMode(800*TAMANHO_TELA,600*TAMANHO_TELA, 32,SDL_OPENGL);
 
     // Cor da janea
     glClearColor(4,5,2,1);
 
 
     //Area exibida
-    glViewport(0,0,800,600);
+    glViewport(0,0,800*TAMANHO_TELA,600*TAMANHO_TELA);
 
     //Define sombra
     glShadeModel(GL_SMOOTH);
