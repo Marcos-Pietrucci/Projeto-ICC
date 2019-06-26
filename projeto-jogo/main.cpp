@@ -7,6 +7,7 @@
 #include"string"
 #include<SDL_mixer.h>
 
+#define VELOCIDADE 0.1
 
 struct usuario{
 
@@ -313,28 +314,28 @@ void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1
     int i;
 
     if(J1->esq && *J1X > 0) //O ponto inicial dele
-        *J1X -= 0.2;
+        *J1X -= VELOCIDADE * 2;
 
     if(J1->dir && *J1X + J1Comp < 400) //Trava o movimento do personagem no quadrado estabelecido
-        *J1X += 0.2;
+        *J1X += VELOCIDADE * 2;
 
     if(J2->esq && *J2X > 400) //se a tecla A for pressionada
-        *J2X -= 0.2;
+        *J2X -= VELOCIDADE * 2;
 
     if(J2->dir && *J2X + J2Comp < 800) //se a tecla D for pressionada
-        *J2X += 0.2;
+        *J2X += VELOCIDADE * 2;
 
     if(J1->up && *J1Y > 0)
-        *J1Y -= 0.2;
+        *J1Y -= VELOCIDADE * 2;
 
     if(J1->down && *J1Y + J1Alt < 550)
-        *J1Y += 0.2;
+        *J1Y += VELOCIDADE * 2;
 
     if(J2->up && *J2Y > 0)
-        *J2Y -= 0.2;
+        *J2Y -= VELOCIDADE * 2;
 
     if(J2->down && *J2Y + J2Alt < 550)
-        *J2Y += 0.2;
+        *J2Y += VELOCIDADE * 2;
 
     if(J1->shot)
     {
@@ -882,7 +883,7 @@ int main(int argc, char* args[])
                             glTexCoord2d(1,0); glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1]); //segundo ponto
                             glTexCoord2d(1,1); glVertex2f(tiros1[i][0] + TiroComp, tiros1[i][1] + TiroAlt);
                             glTexCoord2d(0,1); glVertex2f(tiros1[i][0], tiros1[i][1] + TiroAlt);
-                            tiros1[i][0] += 0.4; //Atualiza a posição do tiro
+                            tiros1[i][0] += VELOCIDADE * 4; //Atualiza a posição do tiro
                         }
                         glEnd();
                         glDisable(GL_TEXTURE_2D);
@@ -925,7 +926,7 @@ int main(int argc, char* args[])
                             glTexCoord2d(1,0); glVertex2f(tiros2[i][0] + TiroComp, tiros2[i][1]); //segundo ponto
                             glTexCoord2d(1,1); glVertex2f(tiros2[i][0] + TiroComp, tiros2[i][1] + TiroAlt);
                             glTexCoord2d(0,1); glVertex2f(tiros2[i][0], tiros2[i][1] + TiroAlt);
-                            tiros2[i][0] -= 0.4;
+                            tiros2[i][0] -= VELOCIDADE * 4;
                         }
 
                         glEnd();
