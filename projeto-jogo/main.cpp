@@ -28,8 +28,8 @@ struct movimento
 };
 
 FILE *arq;
+FILE *conexao;
 bool arquivo = false; //Indica se o arquivo esta aberto
-bool acabou_jogo = false; //Indica se o jogo acabou ou não
 struct usuario Jogador1;
 struct usuario Jogador2;
 
@@ -67,6 +67,16 @@ void abrir_arq(const char *modo) //Abre o arquivo no modo especificado
 	{
         printf("\nAbertura bem sucedida");
     }
+}
+
+void abrir_conexao(const char *modo) //Abre o arquivo no modo especificado
+{
+    //existem varios modos de abrir um arquivo, include o arquivo pode ser binario
+    //modo a+ permite leitura e escrita
+	if((conexao = fopen("Conexao.bin", modo)) == NULL)
+    {
+        printf("\nErro na abertura do arquivo");
+	}
 }
 
 void salvaDados_Jogador(struct usuario alvo) //Salva no arquivo as inforamções de um NOVO Jogador
@@ -164,12 +174,12 @@ void salva_dados_DEV(struct usuario *alvo,char nome[50], int b,int d, int e) //f
     alvo->vitorias = d;
     alvo->derrotas = e;
 }
-SDL_Surface *icone;
+
 void configurar()
 {
     SDL_Init(SDL_INIT_EVERYTHING);
-
-    icone = IMG_Load("icone.png");
+    SDL_Surface *icone;
+    icone = IMG_Load("imagens//icone.png");
     SDL_WM_SetIcon(icone, NULL);
 
     //memoria
@@ -228,6 +238,30 @@ bool colisao(float X1, float Y1, float comp1, float alt1, float X2, float Y2, fl
         return false;
 
     return true;
+}
+
+void carregaDados_Jogador_Conexao() //Carrega informações dos dois jogadores ativos!
+{
+    //Considerando que os jogadores ja digitaram seus nomes e escolheram seus cadastros
+    //Ou se eles já tiverem jogado, considerando que seus registros já foram devidamente salvos no arquivo conexão
+    //Essa função le este arquivo conexao e carrega os unicos dois registros gravados neste nos struct usuario Jogador1 e Jogador2
+
+    abrir_conexao("ab+"); //Neste programa, meu unico interesse é ler o arquivo
+    arquivo = true;
+    fread(&Jogador1,sizeof(struct usuario), 1, conexao);
+    fread(&Jogador2,sizeof(struct usuario), 1, conexao);
+    fclose(conexao);
+
+}
+
+void salvaDados_Jogadores_Conexao() //Salva no arquivo as inforamções de um NOVO Jogador
+{
+    abrir_conexao("wb+");
+    fwrite(&Jogador1, sizeof(struct usuario), 1, conexao); //Escreve, em uma linha do arquivo, a struct inteira do Jogador
+    fwrite(&Jogador2, sizeof(struct usuario), 1, conexao);//Escreve, em uma linha do arquivo, a struct inteira do Jogador
+    fflush(arq);//descarrega o buffer no disco
+    rewind(arq);//Volta o ponteiro do arquivo para seu inicio
+    fclose(conexao);
 }
 
 void escreve_vidas(int vidas1, int vidas2, float cLado, unsigned int coracao)
@@ -345,13 +379,88 @@ void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1
         *c2Y = rand()%550 - cLado;
     }
 }
+void carrega_imagem_player(unsigned int *player1, unsigned int *player2)
+{
 
+    switch (Jogador1.idPersonagem)
+    {
+        case 1 : *player1 = loadTexture("imagens//naruto.png");
+        //printf ("\nPersonagem: Naruto");
+        break;
+
+        case 2 : *player1 = loadTexture("imagens//sasuke.png");
+        //printf ("\nPersonagem: Sasuke");
+        break;
+
+        case 3 : *player1 = loadTexture("imagens//sakura.png");
+        //printf ("\nPersonagem: Sakura");
+        break;
+
+        case 4 : *player1 = loadTexture("imagens//pain.png");
+        //printf ("\nPersonagem: Pain");
+        break;
+
+        case 5 : *player1 = loadTexture("imagens//gaara.png");
+        //printf ("\nPersonagem: Gaara");
+        break;
+
+        case 6 : *player1 = loadTexture("imagens//jiraya.png");
+        //printf ("\nPersonagem: Jiraiya");
+        break;
+
+        case 7 : *player1 = loadTexture("imagens//kakashi.png");
+        //printf ("\nPersonagem: Kakashi");
+        break;
+
+        case 8 : *player1 = loadTexture("imagens//orochimaru.png");
+        //printf ("\nPersonagem: Orochimaru");
+        break;
+    }
+
+    switch (Jogador2.idPersonagem)
+    {
+        case 1 : *player2 = loadTexture("imagens//naruto.png");
+        //printf ("\nPersonagem: Naruto");
+        break;
+
+        case 2 : *player2 = loadTexture("imagens//sasuke.png");
+        //printf ("\nPersonagem: Sasuke");
+        break;
+
+        case 3 : *player2 = loadTexture("imagens//sakura.png");
+        //printf ("\nPersonagem: Sakura");
+        break;
+
+        case 4 : *player2 = loadTexture("imagens//pain.png");
+        //printf ("\nPersonagem: Pain");
+        break;
+
+        case 5 : *player2 = loadTexture("imagens//gaara.png");
+        //printf ("\nPersonagem: Gaara");
+        break;
+
+        case 6 : *player2 = loadTexture("imagens//jiraya.png");
+        //printf ("\nPersonagem: Jiraiya");
+        break;
+
+        case 7 : *player2 = loadTexture("imagens//kakashi.png");
+        //printf ("\nPersonagem: Kakashi");
+        break;
+
+        case 8 : *player2 = loadTexture("imagens//orochimaru.png");
+        //printf ("\nPersonagem: Orochimaru");
+        break;
+    }
+
+
+}
 int main(int argc, char* args[])
 {
+    carregaDados_Jogador_Conexao();
 
     float **tiros1; //A primeira coluna é a posição X, a segunda Y, a terceira indica se aquele tiro ainda existe
     float **tiros2; //A primeira coluna é a posição X, a segunda Y, a terceira indica se aquele tiro ainda existe
-    int i, vencedor, musica_toca;
+    int i, vencedor, musica_toca, conta_tempo;
 
     tiros1 = (float **) calloc(20, sizeof(float *)); //!Acho dificil ter mais de 20 tiros ativos, mas se tiver dando pau pode ser nisso
     tiros2 = (float **) calloc(20, sizeof(float *));
@@ -374,13 +483,23 @@ int main(int argc, char* args[])
     som = Mix_LoadWAV("sons//alarme.wav");
     dano = Mix_LoadWAV("sons//dano.wav");
     musica1 = Mix_LoadMUS("sons//batalha.mp3");
-    musica2 = Mix_LoadMUS("sons//naruto.mp3");
+    musica2 = Mix_LoadMUS("sons//vitoria.mp3");
+
+    Mix_VolumeMusic(MIX_MAX_VOLUME/3);
+    Mix_VolumeChunk(dano, MIX_MAX_VOLUME*2);
+
+    time_t inicio, tempo;
+
+
 
     //!------------ LOGICA AQUI EM BAIXO ---------------------
     bool executando = true;
     bool coracao1 = false; //Variavel que indica se um coração deve ser gerado em local aleatório
     bool coracao2 = false;
     bool comecou_jogo = false;
+    bool creditos = false;
+    bool instrucoes = false;
+    bool acabou_jogo = false;
 
     //Varial que detecta clickes de teclas
     SDL_Event eventos;
@@ -419,16 +538,21 @@ int main(int argc, char* args[])
     unsigned int kunai1 = 0,kunai2 = 0;
     unsigned int coracao = 0;
     unsigned int vitoria = 0;
+    unsigned int creditos_img = 0;
+    unsigned int instrucoes_img = 0;
 
-    //detecta_imagem(); ///Função deve detectar a imagem corretamente, dado os ids dos personagens
-    player1 = loadTexture("imagens//sasuke.png");
-    player2 = loadTexture("imagens//naruto.png");
+    ///Função deve detectar a imagem corretamente, dado os ids dos personagens
+    carrega_imagem_player(&player1, &player2);
     menu = loadTexture("imagens//menu.png");
     fundo = loadTexture("imagens//fundo2.png");
     vitoria = loadTexture("imagens//vitoria.png");
     kunai1 = loadTexture("imagens//kunai1.png");
     kunai2 = loadTexture("imagens//kunai2.png");
     coracao = loadTexture("imagens//coracao.png");
+    creditos_img = loadTexture("imagens//creditos.png");
+    instrucoes_img = loadTexture("imagens//instrucoes.png");
+
+
 
     //loop do jogo
     while(executando)
@@ -471,8 +595,8 @@ int main(int argc, char* args[])
 
                 if(eventos.key.keysym.sym == SDLK_SPACE)
                 {
-                    time_t tempo = time(NULL);
-                    if((double) (tempo - Tick[0]) >= 1.5) //A diferença entre o tiro anterior e esse tem que ser maior que 1s
+                    tempo = time(NULL);
+                    if(comecou_jogo && (double) (tempo - Tick[0]) >= 1.5) //A diferença entre o tiro anterior e esse tem que ser maior que 1s
                     {
                         Tick[0] = tempo;
                         J1.shot = true;
@@ -480,18 +604,37 @@ int main(int argc, char* args[])
                 }
                 if(eventos.key.keysym.sym == SDLK_SLASH)
                 {
-                    time_t tempo = time(NULL);
-                    if((double) (tempo - Tick[1]) >= 1.5) //A diferença entre o tiro anterior e esse tem que ser maior que 1s
+                    tempo = time(NULL);
+                    if(comecou_jogo && (double) (tempo - Tick[1]) >= 1.5) //A diferença entre o tiro anterior e esse tem que ser maior que 1s
                     {
                         Tick[1] = tempo;
                         J2.shot = true;
                     }
                 }
                 if(eventos.key.keysym.sym == SDLK_1)
-                {
-                    comecou_jogo = true;
-                    Mix_PlayMusic(musica1, -1);
+                { //Botao jogar
+                    if(!creditos && !comecou_jogo && !instrucoes) //Garante que está  no menu, ou seja, nenhuma das  outras telas está ativa
+                    {
+                        Mix_PlayMusic(musica1, -1);
+                        comecou_jogo = true;
+                    }
                     //Mix_HaltMusic(); para parar
+                }
+                if(eventos.key.keysym.sym == SDLK_2)
+                { //Botao creditos
+                    if(!creditos && !comecou_jogo && !instrucoes) //Garante que está  no menu, ou seja, nenhuma das  outras telas está ativa
+                    {
+                        creditos = true;
+                        inicio = time(NULL);
+                    }
+                }
+                if(eventos.key.keysym.sym == SDLK_3)
+                { //Botao instrucoes
+                    if(!creditos && !comecou_jogo && !instrucoes) //Garante que está  no menu, ou seja, nenhuma das  outras telas está ativa
+                    {
+                        instrucoes = true;
+                        inicio = time(NULL);
+                    }
                 }
 
             }
@@ -536,7 +679,7 @@ int main(int argc, char* args[])
         //Configura a matriz
         glOrtho(0, 800, 600, 0, -1, 1);
 
-        if(!comecou_jogo)
+        if(!comecou_jogo && !creditos && !instrucoes) //Ativa a tela de  menu
         {
                 glEnable(GL_TEXTURE_2D);
                 glBindTexture(GL_TEXTURE_2D, menu); //!SETA A IMAGEM
@@ -553,7 +696,55 @@ int main(int argc, char* args[])
                 glEnd();
                 glDisable(GL_TEXTURE_2D);
         }
-        else //comecou_jogo
+        else if(creditos) //Ativa a tela de créditos
+        {
+                tempo = time(NULL);
+
+                if((double) tempo - inicio < 15)
+                {
+                    glEnable(GL_TEXTURE_2D);
+                    glBindTexture(GL_TEXTURE_2D, creditos_img); //!SETA A IMAGEM
+
+                    //inicia desenho
+                    glBegin(GL_QUADS);
+
+                    glColor4ub(255,255,255,255);
+                    glTexCoord2d(0,0);   glVertex2f(0, 0);//primeiro ponto
+                    glTexCoord2d(1,0);   glVertex2f(800, 0); // segundo ponto
+                    glTexCoord2d(1,1);   glVertex2f(800, 600);
+                    glTexCoord2d(0,1);   glVertex2f(0, 600);
+
+                    glEnd();
+                    glDisable(GL_TEXTURE_2D);
+                }
+                else
+                    creditos = false;
+        }
+        else if(instrucoes) //Ativa a tela de instruções
+        {
+                tempo = time(NULL);
+
+                if((double) tempo - inicio < 15)
+                {
+                    glEnable(GL_TEXTURE_2D);
+                    glBindTexture(GL_TEXTURE_2D, instrucoes_img); //!SETA A IMAGEM
+
+                    //inicia desenho
+                    glBegin(GL_QUADS);
+
+                    glColor4ub(255,255,255,255);
+                    glTexCoord2d(0,0);   glVertex2f(0, 0);//primeiro ponto
+                    glTexCoord2d(1,0);   glVertex2f(800, 0); // segundo ponto
+                    glTexCoord2d(1,1);   glVertex2f(800, 600);
+                    glTexCoord2d(0,1);   glVertex2f(0, 600);
+
+                    glEnd();
+                    glDisable(GL_TEXTURE_2D);
+                }
+                else
+                    instrucoes = false;
+        }
+        else if(comecou_jogo) //comecou_jogo, ativa o jogo
         {
             //-----------Setando o fundo
             if(!acabou_jogo)
@@ -676,10 +867,12 @@ int main(int argc, char* args[])
                                 //Acaba o jogo
                                 Jogador1.vitorias++;
                                 Jogador2.derrotas++;
-                                //Salva os dados devidamente
+
                                 acabou_jogo = true;
                                 vencedor = 1;
                                 musica_toca = 1;
+                                inicio = time(NULL); //Inicia a contagem para a tela de vitoria
+
                             }
                         }
                         else
@@ -721,6 +914,8 @@ int main(int argc, char* args[])
                                 acabou_jogo = true;
                                 vencedor = 2;
                                 musica_toca = 1;
+                                inicio = time(NULL);
+
                             }
                         }
                         else
@@ -755,50 +950,64 @@ int main(int argc, char* args[])
             }
             else //acabou o jogo, mostrar vitorioso
             {
-                if(musica_toca == 1)
+                tempo = time(NULL);
+                if(musica_toca == 1) //Troca a musica, e a mantém até o final
                 {
+                    alteraDados_Jogador(Jogador1); //Como entrara aqui so uma vez, ja salva todos os dados necessarios
+                    alteraDados_Jogador(Jogador2);
+                    salvaDados_Jogadores_Conexao(); //Salva no arquivo ponte as informações recentes
+                    //Isso é bom pois possibilita revanche sem ter que passar pelo menu
                     Mix_HaltMusic();
+                    Mix_VolumeMusic(MIX_MAX_VOLUME/2);
                     Mix_PlayMusic(musica2, -1);
                     musica_toca = 0;
+
                 }
-                glEnable(GL_TEXTURE_2D);
-                glBindTexture(GL_TEXTURE_2D, vitoria); //!SETA A IMAGEM
 
-                //inicia desenho
-                glBegin(GL_QUADS);
+                if((double) (tempo - inicio) < 15) //A tela deve ficar 15s a mostra
+                {
 
-                glColor4ub(255,255,255,255);
-                glTexCoord2d(0,0);   glVertex2f(0, 0);//primeiro ponto
-                glTexCoord2d(1,0);   glVertex2f(800, 0); // segundo ponto
-                glTexCoord2d(1,1);   glVertex2f(800, 600);
-                glTexCoord2d(0,1);   glVertex2f(0, 600);
+                    glEnable(GL_TEXTURE_2D);
+                    glBindTexture(GL_TEXTURE_2D, vitoria); //!SETA A IMAGEM
 
-                glEnd();
-                glDisable(GL_TEXTURE_2D);
+                    //inicia desenho
+                    glBegin(GL_QUADS);
 
-                //inicia desenho do personagemm
-                glEnable(GL_TEXTURE_2D);
-                if(vencedor == 1)
-                    glBindTexture(GL_TEXTURE_2D, player1); //!SETA A IMAGEM
+                    glColor4ub(255,255,255,255);
+                    glTexCoord2d(0,0);   glVertex2f(0, 0);//primeiro ponto
+                    glTexCoord2d(1,0);   glVertex2f(800, 0); // segundo ponto
+                    glTexCoord2d(1,1);   glVertex2f(800, 600);
+                    glTexCoord2d(0,1);   glVertex2f(0, 600);
+
+                    glEnd();
+                    glDisable(GL_TEXTURE_2D);
+
+                    //inicia desenho do personagemm
+                    glEnable(GL_TEXTURE_2D);
+                    if(vencedor == 1)
+                        glBindTexture(GL_TEXTURE_2D, player1); //!SETA A IMAGEM
+                    else
+                        glBindTexture(GL_TEXTURE_2D, player2); //!SETA A IMAGEM
+
+
+                    glBegin(GL_QUADS);
+
+                    //Desenhando jogador1
+                    J1Comp = 300;
+                    J1Alt = 380;
+                    J1X = 10;
+                    J1Y = 150;
+                    glColor4ub(255,255,255,255);
+                    glTexCoord2d(0,0); glVertex2f(J1X, J1Y); //primeiro ponto
+                    glTexCoord2d(1,0); glVertex2f(J1X + J1Comp, J1Y); //segundo ponto
+                    glTexCoord2d(1,1); glVertex2f(J1X + J1Comp, J1Y + J1Alt);
+                    glTexCoord2d(0,1); glVertex2f(J1X, J1Y + J1Alt);
+
+                    glEnd();
+                    glDisable(GL_TEXTURE_2D);
+                }
                 else
-                    glBindTexture(GL_TEXTURE_2D, player2); //!SETA A IMAGEM
-
-
-                glBegin(GL_QUADS);
-
-                //Desenhando jogador1
-                J1Comp = 300;
-                J1Alt = 380;
-                J1X = 10;
-                J1Y = 150;
-                glColor4ub(255,255,255,255);
-                glTexCoord2d(0,0); glVertex2f(J1X, J1Y); //primeiro ponto
-                glTexCoord2d(1,0); glVertex2f(J1X + J1Comp, J1Y); //segundo ponto
-                glTexCoord2d(1,1); glVertex2f(J1X + J1Comp, J1Y + J1Alt);
-                glTexCoord2d(0,1); glVertex2f(J1X, J1Y + J1Alt);
-
-                glEnd();
-                glDisable(GL_TEXTURE_2D);
+                    executando = false;
 
             }
         }
@@ -809,8 +1018,6 @@ int main(int argc, char* args[])
         SDL_GL_SwapBuffers();
 
     }
-
-    //para detectar uma tecla "if(eventos.key.keysym.sym == SDLK_ESCAPE)"
 
 
     for(i = 0; i < 20; i++)
