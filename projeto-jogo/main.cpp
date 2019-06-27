@@ -8,7 +8,7 @@
 #include<SDL_mixer.h>
 //!Essa constante define o valor da velocidade dos personagens e dos projéteis
 //!Caso necessário, altere esse valor para calibrar a velocidade
-#define VELOCIDADE 0.1 //recomendamos aumentar de 0.5 em 0.5 até encontrar o valor ideal
+#define VELOCIDADE 0.1 //recomendamos aumentar de 0.1 em 0.1 até encontrar o valor ideal
 
 //!Essa constante define as proporções da tela
 #define TAMANHO_TELA 1 //recomendamos aumentar para valores entre 1 e 2
