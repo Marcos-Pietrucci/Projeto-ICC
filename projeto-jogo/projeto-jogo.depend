@@ -14,3 +14,13 @@
 	"string"
 	<SDL_mixer.h>
 
+1578519183 source:c:\users\marcosviníciusfirmin\documents\usp\engenharia da computação\introdução à ciência de computação\projeto-icc\projeto-icc\projeto-jogo\main.cpp
+	<stdio.h>
+	<string.h>
+	<SDL.h>
+	"SDL_opengl.h"
+	<time.h>
+	<SDL_image.h>
+	"string"
+	<SDL_mixer.h>
+

@@ -312,7 +312,7 @@ void escreve_vidas(int vidas1, int vidas2, float cLado, unsigned int coracao)
 }
 
 time_t Tick[2];
-time_t t_coracao = time(NULL);
+time_t t_coracao;
 void movimento(struct movimento *J1, struct movimento *J2, float *J1X, float *J1Y, float *J2X, float *J2Y,
                 float **tiros1, float **tiros2, float J1Comp, float J1Alt, float J2Comp, float J2Alt, bool *coracao1, bool *coracao2,
                 float *c1X, float *c1Y, float *c2X, float *c2Y, float cLado) //Processa todos os movimentos necessários, e retorna os valores das coordernadas
@@ -623,6 +623,7 @@ int main(int argc, char* args[])
                     if(!creditos && !comecou_jogo && !instrucoes) //Garante que está  no menu, ou seja, nenhuma das  outras telas está ativa
                     {
                         Mix_PlayMusic(musica1, -1);
+                        t_coracao = time(NULL); //Inicia o contador dos coraçãoes corretamente, após o início do jogo
                         comecou_jogo = true;
                     }
                     //Mix_HaltMusic(); para parar
@@ -753,10 +754,9 @@ int main(int argc, char* args[])
         }
         else if(comecou_jogo) //comecou_jogo, ativa o jogo
         {
-            //-----------Setando o fundo
+            //-----------Setando o fundo ----//
             if(!acabou_jogo)
             {
-
 
                 glEnable(GL_TEXTURE_2D);
                 glBindTexture(GL_TEXTURE_2D, fundo); //!SETA A IMAGEM
@@ -1046,7 +1046,6 @@ int main(int argc, char* args[])
 
     if(arquivo)
         fclose(arq);
-
 
     return 0;
 }
