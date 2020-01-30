@@ -5,5 +5,4 @@ Jogo "Naruto: ultimate ninja fighter simulator" desenvolvido como trabalho da di
   <li>Eduardo Cavallari</li>
   <li>Marcos Pietrucci</li>
 </ul>
-<br>
 Uma versão adaptada e disponível pode ser encontrada em https://github.com/Marcos-Pietrucci/Ancient-Warfare-Simulator 
